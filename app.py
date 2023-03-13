@@ -28,7 +28,7 @@ def graph(number):
     ])
     return fig
 
-input = gr.Slider(1, 8, 1, step=1, label='last n years', info='今日から選択された数字nまでの過去n年間における卸売数量の最大値をグラフで表示するだけ')
+input = gr.Slider(1, 8, 1, step=1, label='last n years', info='今日から過去n年間におけるハマチの卸売数量の最大値をグラフで表示するだけ')
 
 iface = gr.Interface(fn=graph, inputs=input, outputs=gr.Plot())
 iface.launch()
