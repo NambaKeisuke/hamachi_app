@@ -28,7 +28,7 @@ class SarimaModel:
         """学習"""
         sarima_model = sm.tsa.SARIMAX(train, order=self.order, seasonal_order=self.seasonal_order)
         sarima_fit_model = sarima_model.fit()
-        display(sarima_fit_model.summary())
+        # display(sarima_fit_model.summary())
         return sarima_fit_model
     
     def predict(self, sarima_fit_model):
