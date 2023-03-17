@@ -17,8 +17,8 @@
 
 - FEH_buri.csv
     - 小売物価統計調査(https://www.stat.go.jp/data/kouri/doukou/3.html )より取得
-    - 日本の主要都市における年次のブリの平均価格
-    - 期間は2000年-2021年
+    - 東京23区における月次のブリの平均価格
+    - 期間は2016年1月-2023年
 
 - nagasaki_weather
     - 気象庁(https://www.jma.go.jp/jma/menu/menureport.html )より取得。長崎県島原の天気情報
