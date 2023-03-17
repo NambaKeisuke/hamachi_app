@@ -3,17 +3,26 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import gradio as gr
+import get_fish_price
 from model import SarimaModel
 
 df_hamachi = pd.read_csv(r'./data/hamachi_price.csv', encoding='utf_8_sig')
 df_hamachi["date"] = df_hamachi["date"].apply(lambda x: pd.to_datetime(str(x)))
 
 df_hamachi = df_hamachi.set_index(df_hamachi["date"])
+today = dt.date.today()
+
+if df_hamachi['date'].max().date() < today:
+    start_date = df_hamachi['date'].max().date() + dt.timedelta(days=1)
+    temp_df = get_fish_price.get_fish_price_data(start_date=start_date, end_date=today)
+    temp_df["date"] = temp_df["date"].apply(lambda x: pd.to_datetime(str(x)))
+    temp_df = temp_df.set_index(temp_df["date"])
+    df_hamachi = pd.concat([df_hamachi, temp_df])
+    df_hamachi.to_csv(r'/data/hamachi_price.csv', encoding='utf_8_sig')
+
 train = df_hamachi["quantity"]
 
-
 def graph(forecast_range):
-    today = dt.date.today()
     year = today.year
     sarima = SarimaModel(forecast_range=int(forecast_range))
     sarima_fit = sarima.fit(train)
