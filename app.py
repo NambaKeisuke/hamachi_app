@@ -12,18 +12,20 @@ df_hamachi["date"] = df_hamachi["date"].apply(lambda x: pd.to_datetime(str(x)))
 df_hamachi = df_hamachi.set_index(df_hamachi["date"])
 today = dt.date.today()
 
+# ハマチの卸売数量のデータを更新
 if df_hamachi['date'].max().date() < today:
     start_date = df_hamachi['date'].max().date() + dt.timedelta(days=1)
     temp_df = get_fish_price.get_fish_price_data(start_date=start_date, end_date=today)
     temp_df["date"] = temp_df["date"].apply(lambda x: pd.to_datetime(str(x)))
     temp_df = temp_df.set_index(temp_df["date"])
     df_hamachi = pd.concat([df_hamachi, temp_df])
-    df_hamachi.to_csv(r'/data/hamachi_price.csv', encoding='utf_8_sig')
+    df_hamachi.to_csv(r'./data/hamachi_price.csv', encoding='utf_8_sig')
 
 train = df_hamachi["quantity"]
 
 def graph(forecast_range):
     year = today.year
+    # SARIMAモデルで予測
     sarima = SarimaModel(forecast_range=int(forecast_range))
     sarima_fit = sarima.fit(train)
     test_pred = sarima.predict(sarima_fit)
@@ -36,6 +38,7 @@ def graph(forecast_range):
     global test_pred_max
     test_pred_max = test_pred.loc[lambda df: df["predicted_mean"]==df["predicted_mean"].max()]
 
+    # グラフにプロット
     fig = go.Figure(data=[
     go.Scatter(x=temp_df['date'], y=temp_df['quantity'], name='実績'),
     go.Scatter(x=test_pred.index, y=test_pred['predicted_mean'], name='予測'),
