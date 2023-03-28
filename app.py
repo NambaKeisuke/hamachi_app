@@ -9,19 +9,76 @@ from model import SarimaModel
 df_hamachi = pd.read_csv(r'./data/hamachi_price.csv', encoding='utf_8_sig')
 df_hamachi["date"] = df_hamachi["date"].apply(lambda x: pd.to_datetime(str(x)))
 
-df_hamachi = df_hamachi.set_index(df_hamachi["date"])
 today = dt.date.today()
+year = today.year
+month = today.month
 
 # ハマチの卸売数量のデータを更新
 if df_hamachi['date'].max().date() < today:
     start_date = df_hamachi['date'].max().date() + dt.timedelta(days=1)
     temp_df = get_fish_price.get_fish_price_data(start_date=start_date, end_date=today)
     temp_df["date"] = temp_df["date"].apply(lambda x: pd.to_datetime(str(x)))
-    temp_df = temp_df.set_index(temp_df["date"])
     df_hamachi = pd.concat([df_hamachi, temp_df])
-    df_hamachi.to_csv(r'./data/hamachi_price.csv', encoding='utf_8_sig')
+    df_hamachi.to_csv(r'./data/hamachi_price2.csv', encoding='utf_8_sig', index=False)
 
-train = df_hamachi["quantity"]
+df_hamachi["month"] = df_hamachi["date"].dt.month
+df_hamachi["year"] = df_hamachi["date"].dt.year
+#小売物価統計の最新の行を取得
+df_hamachi_latest = df_hamachi.tail(1)
+
+#小売物価統計調査データ
+df_FEH = pd.read_csv("./data/FEH_buri.csv")
+df_FEH["時間軸（月）"] = pd.to_datetime(df_FEH["時間軸（月）"], format='%Y年%m月')
+df_FEH["year"] = df_FEH["時間軸（月）"].dt.year
+df_FEH["month"] = df_FEH["時間軸（月）"].dt.month
+df_FEH = df_FEH.sort_values(by=["year", "month"], ascending=False)
+#小売物価統計の最新の行を取得
+df_FEH_latest = df_FEH.head(1)
+#ハマチの卸売数量のデータの最新月は、何カ月差か計算
+delta = abs(df_hamachi_latest["year"].iloc[0] - df_FEH_latest["year"].iloc[0])*12\
+        + abs(df_hamachi_latest["month"].iloc[0] - df_FEH_latest["month"].iloc[0])
+
+#東京都中央卸売市場　休業日データ
+df_calender = pd.read_csv("./data/toyosu_calender_2023.csv")
+df_calender["date"] = pd.to_datetime(df_calender["date"])
+df_calender["week_day"] = df_calender["date"].apply(lambda x: x.weekday())
+
+#ハマチの卸売数量のデータと小売物価統計調査データをマージ
+df_hamachi = pd.merge(left=df_hamachi, right=df_FEH[["year", "month", "value"]], on=["year", "month"],
+        how="left")
+#直近のデータの内、小売物価統計調査データがnanの箇所を最新の値で埋める
+for i in range(delta-1, -1, -1):
+    if month-i>0:
+        df_hamachi.loc[(df_hamachi["year"]==year) & (df_hamachi["month"]==month-i),
+           "value"
+          ] = df_FEH_latest["value"].at[0]
+    elif (month-i>-12)and (month-i<=0):
+        df_hamachi.loc[(df_hamachi["year"]==year-1 & (df_hamachi["month"]==month-i+12)),
+           "value"
+          ] = df_FEH_latest["value"].at[0] 
+    else:
+        raise ValueError("小売物価統計調査データを更新してください")
+
+df_hamachi = df_hamachi.set_index(df_hamachi["date"])
+train = df_hamachi[["quantity", "value"]]
+train.dropna(subset = ["value"], inplace=True)
+
+# df_hamachi = pd.read_csv(r'./data/hamachi_price.csv', encoding='utf_8_sig')
+# df_hamachi["date"] = df_hamachi["date"].apply(lambda x: pd.to_datetime(str(x)))
+
+# df_hamachi = df_hamachi.set_index(df_hamachi["date"])
+# today = dt.date.today()
+
+# # ハマチの卸売数量のデータを更新
+# if df_hamachi['date'].max().date() < today:
+#     start_date = df_hamachi['date'].max().date() + dt.timedelta(days=1)
+#     temp_df = get_fish_price.get_fish_price_data(start_date=start_date, end_date=today)
+#     temp_df["date"] = temp_df["date"].apply(lambda x: pd.to_datetime(str(x)))
+#     temp_df = temp_df.set_index(temp_df["date"])
+#     df_hamachi = pd.concat([df_hamachi, temp_df])
+#     df_hamachi.to_csv(r'./data/hamachi_price.csv', encoding='utf_8_sig')
+
+# train = df_hamachi["quantity"]
 
 def graph(forecast_range):
     year = today.year
