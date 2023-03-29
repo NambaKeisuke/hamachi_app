@@ -19,7 +19,7 @@ if df_hamachi['date'].max().date() < today:
     temp_df = get_fish_price.get_fish_price_data(start_date=start_date, end_date=today)
     temp_df["date"] = temp_df["date"].apply(lambda x: pd.to_datetime(str(x)))
     df_hamachi = pd.concat([df_hamachi, temp_df])
-    df_hamachi.to_csv(r'./data/hamachi_price2.csv', encoding='utf_8_sig', index=False)
+    df_hamachi.to_csv(r'./data/hamachi_price.csv', encoding='utf_8_sig', index=False)
 
 df_hamachi["month"] = df_hamachi["date"].dt.month
 df_hamachi["year"] = df_hamachi["date"].dt.year
